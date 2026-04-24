@@ -37,6 +37,19 @@ function boardFromLeftOrientation(board: Board, direction: Direction): Board {
   }
 }
 
+function fromLeftCoord(r: number, c: number, direction: Direction): { row: number; col: number } {
+  switch (direction) {
+    case 'LEFT':
+      return { row: r, col: c };
+    case 'RIGHT':
+      return { row: r, col: GRID_SIZE - 1 - c };
+    case 'UP':
+      return { row: c, col: r };
+    case 'DOWN':
+      return { row: GRID_SIZE - 1 - c, col: r };
+  }
+}
+
 /**
  * Apply a slide+merge in `direction` to the canonical state. Pure: returns the
  * new tile list (with surviving ids preserved, merged tiles minted fresh, and
@@ -82,9 +95,10 @@ export function applyMove(state: GameState, direction: Direction): MoveResult {
         };
         resolved[r]![c] = mergedTile;
         if (mergedValue >= 2048) reachedTarget = true;
+        const finalCoord = fromLeftCoord(r, c, direction);
         dyingExtras.push(
-          { ...aSource, row: r, col: c, isDying: true },
-          { ...bSource, row: r, col: c, isDying: true },
+          { ...aSource, row: finalCoord.row, col: finalCoord.col, isDying: true },
+          { ...bSource, row: finalCoord.row, col: finalCoord.col, isDying: true },
         );
       } else if (out) {
         resolved[r]![c] = { ...out, row: r, col: c };
