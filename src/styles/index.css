@@ -4,6 +4,10 @@
   color-scheme: light;
   background: #faf8ef;
   color: #776e65;
+  --board-bg: #bbada0;
+  --cell-bg: #cdc1b4;
+  --gap: 12px;
+  --radius: 6px;
 }
 
 * {
@@ -18,9 +22,239 @@ body,
   min-height: 100%;
 }
 
+body {
+  display: flex;
+  justify-content: center;
+}
+
 .app {
-  max-width: 520px;
-  margin: 0 auto;
-  padding: 24px 16px;
+  width: min(520px, 100%);
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app__header {
   text-align: center;
+}
+
+.app__title {
+  margin: 0;
+  font-size: 56px;
+  font-weight: 800;
+  color: #776e65;
+}
+
+.app__subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #8f8779;
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.scoreboard__cell {
+  background: #bbada0;
+  color: #f9f6f2;
+  border-radius: var(--radius);
+  padding: 8px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scoreboard__label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+
+.scoreboard__value {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scoreboard__cell--status[data-status='won'] {
+  background: #edc22e;
+}
+
+.scoreboard__cell--status[data-status='gameOver'] {
+  background: #b34e3a;
+}
+
+.scoreboard__cell--status[data-status='paused'] {
+  background: #8f7a66;
+}
+
+.app__board-wrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+.board {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--board-bg);
+  border-radius: var(--radius);
+  padding: var(--gap);
+}
+
+.board__grid {
+  position: absolute;
+  inset: var(--gap);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: var(--gap);
+}
+
+.board__cell {
+  background: var(--cell-bg);
+  border-radius: var(--radius);
+}
+
+.board__tiles {
+  position: absolute;
+  inset: var(--gap);
+}
+
+.tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  font-weight: 800;
+  font-size: 36px;
+  font-variant-numeric: tabular-nums;
+  transition-property: transform;
+  transition-timing-function: ease-out;
+  /* width / height / transform / colors set inline; gap is reserved by transform spacing */
+  padding: 4px;
+  /* Subtract the per-side gap from the painted box without breaking percent transforms */
+  background-clip: padding-box;
+}
+
+.tile span {
+  display: block;
+  /* Inset so tiles visually respect the gap without shrinking the transform unit. */
+  width: calc(100% - var(--gap));
+  height: calc(100% - var(--gap));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: inherit;
+  color: inherit;
+  margin: calc(var(--gap) / 2);
+}
+
+.tile--sm {
+  font-size: 28px;
+}
+
+.tile--xs {
+  font-size: 22px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.controls__button {
+  background: #8f7a66;
+  color: #f9f6f2;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.controls__button:hover {
+  background: #7d6a58;
+}
+
+.controls__button--primary {
+  background: #edc22e;
+  color: #776e65;
+}
+
+.controls__button--primary:hover {
+  background: #d8b125;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(238, 228, 218, 0.73);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 16px;
+}
+
+.overlay[data-status='gameOver'] {
+  background: rgba(238, 228, 218, 0.85);
+}
+
+.overlay__panel {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.overlay__title {
+  margin: 0;
+  font-size: 36px;
+  color: #776e65;
+}
+
+.overlay__body {
+  margin: 0;
+  color: #776e65;
+}
+
+.overlay__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.overlay__button {
+  background: #8f7a66;
+  color: #f9f6f2;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.overlay__button--primary {
+  background: #edc22e;
+  color: #776e65;
 }
