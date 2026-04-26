@@ -140,13 +140,15 @@ body {
   font-variant-numeric: tabular-nums;
   transition-property: transform;
   transition-timing-function: ease-out;
-  background: transparent !important;
+  background: transparent;
   pointer-events: none;
+  /* width / height / transform are set inline; sizing is exact cell size,
+     so there is no overlap with neighbouring cells. */
 }
 
 .tile span {
   position: absolute;
-  inset: calc(var(--gap) / 2);
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
