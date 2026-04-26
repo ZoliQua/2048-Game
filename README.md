@@ -216,7 +216,7 @@ src/
 
 ## ⚖️ License
 
-Released under the MIT License. © 2026 Zoltan Dul.
+Released under the [MIT License](./LICENSE). © 2026 Zoltan Dul.
 
 ---
 
