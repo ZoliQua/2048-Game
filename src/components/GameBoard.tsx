@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { GRID_SIZE } from '../logic/constants';
 import type { Tile as TileType } from '../logic/types';
 import { Tile } from './Tile';
@@ -6,7 +7,10 @@ type GameBoardProps = {
   tiles: TileType[];
 };
 
-export function GameBoard({ tiles }: GameBoardProps) {
+export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function GameBoard(
+  { tiles },
+  ref,
+) {
   const cells: React.ReactNode[] = [];
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
@@ -16,6 +20,7 @@ export function GameBoard({ tiles }: GameBoardProps) {
 
   return (
     <div
+      ref={ref}
       className="board"
       style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`, gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)` }}
     >
@@ -27,4 +32,4 @@ export function GameBoard({ tiles }: GameBoardProps) {
       </div>
     </div>
   );
-}
+});

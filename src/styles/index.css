@@ -134,41 +134,70 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: var(--radius);
   font-weight: 800;
   font-size: 36px;
   font-variant-numeric: tabular-nums;
   transition-property: transform;
   transition-timing-function: ease-out;
-  /* width / height / transform / colors set inline; gap is reserved by transform spacing */
-  padding: 4px;
-  /* Subtract the per-side gap from the painted box without breaking percent transforms */
-  background-clip: padding-box;
+  background: transparent !important;
+  pointer-events: none;
 }
 
 .tile span {
-  display: block;
-  /* Inset so tiles visually respect the gap without shrinking the transform unit. */
-  width: calc(100% - var(--gap));
-  height: calc(100% - var(--gap));
+  position: absolute;
+  inset: calc(var(--gap) / 2);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius);
-  background: inherit;
+  background: var(--tile-bg, transparent);
   color: inherit;
-  margin: calc(var(--gap) / 2);
 }
 
-.tile--sm {
+.tile--sm span {
   font-size: 28px;
 }
 
-.tile--xs {
+.tile--xs span {
   font-size: 22px;
+}
+
+@keyframes tile-spawn {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tile-merge {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.tile--spawn span {
+  animation: tile-spawn 160ms ease-out;
+  transform-origin: center;
+}
+
+.tile--merge span {
+  animation: tile-merge 180ms ease-out 80ms;
+  transform-origin: center;
+}
+
+.tile--dying {
+  opacity: 0.001;
 }
 
 .controls {

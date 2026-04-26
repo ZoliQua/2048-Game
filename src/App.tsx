@@ -6,6 +6,7 @@ import { ScoreBoard } from './components/ScoreBoard';
 import { useElapsedSeconds } from './hooks/useElapsedSeconds';
 import { useHighScore } from './hooks/useHighScore';
 import { useKeyboardMove } from './hooks/useKeyboardMove';
+import { useSwipeInput } from './hooks/useSwipeInput';
 import { ANIMATION_MS } from './logic/constants';
 import { advanceGame, createInitialState } from './logic/game';
 import type { GameAction, GameState } from './logic/types';
@@ -40,6 +41,8 @@ export default function App() {
   }, [hasDying, state.moveCount]);
 
   useKeyboardMove(state.status, dispatch);
+  const swipeEnabled = state.status === 'idle' || state.status === 'running';
+  const boardRef = useSwipeInput(swipeEnabled, dispatch);
 
   const onRestart = useCallback(() => {
     dispatch({ type: 'restart' });
@@ -71,7 +74,7 @@ export default function App() {
       />
 
       <div className="app__board-wrap">
-        <GameBoard tiles={state.tiles} />
+        <GameBoard ref={boardRef} tiles={state.tiles} />
         <Overlay
           status={state.status}
           score={state.score}

@@ -19,14 +19,14 @@ function TileImpl({ tile }: TileProps) {
   if (valueLength >= 4) classes.push('tile--xs');
   else if (valueLength === 3) classes.push('tile--sm');
 
-  const style: React.CSSProperties = {
+  const style: React.CSSProperties & { ['--tile-bg']?: string } = {
     transform: `translate(${tile.col * cellPercent}%, ${tile.row * cellPercent}%)`,
-    background: bg,
     color: fg,
     width: `${cellPercent}%`,
     height: `${cellPercent}%`,
     transitionDuration: `${ANIMATION_MS}ms`,
     zIndex: tile.isDying ? 1 : tile.mergedFrom ? 3 : 2,
+    ['--tile-bg']: bg,
   };
 
   return (
