@@ -1,7 +1,8 @@
 import { applyMove } from './move';
 import { spawnTile } from './spawn';
+import { UNDO_LIMIT } from './types';
 import { hasLost, hasWon } from './win';
-import type { GameAction, GameState, Rng, Tile } from './types';
+import type { GameAction, GameState, HistorySnapshot, Rng, Tile } from './types';
 
 export type CreateInitialOptions = {
   best?: number;
@@ -18,6 +19,7 @@ export function createInitialState(rng: Rng, options: CreateInitialOptions = {})
     continueAfterWin: false,
     moveCount: 0,
     nextTileId: 1,
+    history: [],
   };
   let state = empty;
   for (let i = 0; i < 2; i++) {
@@ -26,6 +28,24 @@ export function createInitialState(rng: Rng, options: CreateInitialOptions = {})
     state = { ...state, tiles: [...state.tiles, tile], nextTileId };
   }
   return state;
+}
+
+function snapshot(state: GameState): HistorySnapshot {
+  // Drop the volatile per-move animation flags so an undo restore lands on a
+  // visually quiet board (no spurious spawn-pop or merge-pulse triggered).
+  const tiles: Tile[] = state.tiles
+    .filter((t) => !t.isDying)
+    .map((t) => ({ id: t.id, value: t.value, row: t.row, col: t.col }));
+  return {
+    tiles,
+    size: state.size,
+    status: state.status,
+    score: state.score,
+    hasWon: state.hasWon,
+    continueAfterWin: state.continueAfterWin,
+    moveCount: state.moveCount,
+    nextTileId: state.nextTileId,
+  };
 }
 
 function clearVolatileFlags(tiles: Tile[]): Tile[] {
@@ -75,6 +95,8 @@ export function advanceGame(state: GameState, action: GameAction, rng: Rng): Gam
       const result = applyMove(state, action.direction);
       if (!result.changed) return state;
 
+      const preMoveSnapshot = snapshot(state);
+
       const newScore = state.score + result.scoreDelta;
       const movedState: GameState = {
         ...state,
@@ -103,6 +125,16 @@ export function advanceGame(state: GameState, action: GameAction, rng: Rng): Gam
         ...afterSpawn,
         hasWon: stickyWon,
         status: nextStatus,
+        history: [preMoveSnapshot, ...state.history].slice(0, UNDO_LIMIT),
+      };
+    }
+    case 'undo': {
+      const [prev, ...rest] = state.history;
+      if (!prev) return state;
+      return {
+        ...prev,
+        best: state.best,
+        history: rest,
       };
     }
   }

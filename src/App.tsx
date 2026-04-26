@@ -50,6 +50,7 @@ export default function App() {
   }, []);
   const onContinue = useCallback(() => dispatch({ type: 'continueAfterWin' }), []);
   const onResume = useCallback(() => dispatch({ type: 'resume' }), []);
+  const onUndo = useCallback(() => dispatch({ type: 'undo' }), []);
   const onPauseToggle = useCallback(() => {
     dispatch(state.status === 'paused' ? { type: 'resume' } : { type: 'pause' });
   }, [state.status]);
@@ -86,9 +87,11 @@ export default function App() {
 
       <GameControls
         status={state.status}
+        canUndo={state.history.length > 0}
         onRestart={onRestart}
         onPauseToggle={onPauseToggle}
         onContinue={onContinue}
+        onUndo={onUndo}
       />
     </main>
   );

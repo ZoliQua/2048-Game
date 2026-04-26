@@ -225,6 +225,16 @@ body {
   background: #7d6a58;
 }
 
+.controls__button:disabled {
+  background: #c4b6a3;
+  color: #f9f6f2;
+  cursor: not-allowed;
+}
+
+.controls__button:disabled:hover {
+  background: #c4b6a3;
+}
+
 .controls__button--primary {
   background: #edc22e;
   color: #776e65;
