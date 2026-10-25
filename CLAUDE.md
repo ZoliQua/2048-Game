@@ -7,24 +7,29 @@
   + <https://github.com/ZoliQua/Snake-Game> — same architectural family.
   + <https://github.com/ZoliQua/Tetris-Game> — same architectural family.
   Mirror their hook patterns and conventions unless a 2048-specific reason dictates otherwise.
-* **Plan**: see `2048-GAME-PLAN.md` in the repo root for the full design and phased roadmap.
-* **Stack**: React 18+, Vite, TypeScript, plain CSS or CSS Modules.
+* **Arcade**: part of Zoltan's Arcade (<https://github.com/ZoliQua/Arcade-Game-Center>), game id `2048`, colour token `--game-2048`.
+* **Plan**: `2048-GAME-PLAN.md` is the historical v0 design/roadmap; this file and the code are authoritative.
+* **Stack**: React 18.3, Vite 5.4, TypeScript 5.6, CSS Modules, ESLint 9 flat config, Vitest 2.1 + jsdom + Testing Library.
 * **Package manager**: npm.
 * **Node**: >=20.
 * **Scripts**:
   + `npm run dev` — local dev server
   + `npm run build` — production build
   + `npm run preview` — preview production build
-  + `npm run typecheck` — `tsc --noEmit`
+  + `npm run typecheck` — `tsc -b`
   + `npm run lint` — ESLint
-  + `npm run test` — Vitest (only if a test setup actually exists)
+  + `npm test` — Vitest (logic + component tests, jsdom)
+  + `npm run check` — lint → typecheck → test → build (same as CI)
 * **Board**: fixed 4 × 4. No configurable size in v1.
 * **Spawn**: one new tile after every successful move, value 2 with probability 0.9 and 4 with probability 0.1. Initial state seeds 2 tiles drawn from the same distribution.
 * **Win**: a tile of value 2048 appears. `hasWon` is sticky. The user may continue past the win for higher tiles.
 * **Lose**: every cell occupied AND no two orthogonally adjacent tiles share a value. Checked **after** the spawn step.
 * **Scoring**: each merge adds the merged tile's value (e.g. `2 + 2 → 4` adds `+4`). No combo, no level multiplier.
-* **High score**: `localStorage` key `2048.highScore`. Only written when strictly higher.
-* **Controls**: arrow keys + WASD, `Space`/`P` pause, `C` continue after win, `R` restart. **Touch/swipe is in scope for v1** — see Input section.
+* **Stats / best**: recorded once per finished run by the kit (`useArcadeRun`) in `arcade.stats.2048`; the legacy `2048.highScore` key is migrated by the kit. Outcome `win` if max tile ≥ 2048, else `over`.
+* **Autosave**: `arcade.session.2048` (schema 1) once a move has been made; validated by `logic/persist.ts` (`is2048State`, incl. undo history); restored paused with "Welcome back".
+* **Status mapping**: no `idle` — a fresh board is `running`, the run clock starts with the first move. `paused` and `won` (win/continue choice) report `paused` to the arcade; `gameOver` when no move remains.
+* **Controls**: arrow keys + WASD + swipe, `Space`/`Enter` primary (pause / keep going / new game), `P`/`Esc` pause, `C` keep going after win, `U` undo, `R` new game. `T` is reserved for the theme toggle.
+* **Undo**: last 2 moves; allowed while `running` or `won`, never while paused or after `gameOver`.
 * **Animations**: in scope for v1. CSS-only (`transform` + `transition`). No animation library.
 * **Rendering**: grid-based DOM. Tiles are absolutely positioned with `transform: translate(...)` over a CSS-grid background. No canvas.
 * **Game loop**: there is **no auto-tick**. Every state change is user-driven. There is **no `useGameLoop`** in this project.
@@ -49,6 +54,7 @@ Logic lives outside presentation. Do not bury game rules inside JSX. Animation l
 
 ```
 src/
+  arcade/            # VENDORED shared kit from Arcade-Game-Center/packages/kit — never edit here
   logic/
     constants.ts     # grid size (4), target value (2048), spawn weights, tile colours, animation duration
     types.ts         # shared types
@@ -56,23 +62,28 @@ src/
     merge.ts         # slideAndMerge(line) — pure 1-D operation
     move.ts          # applyMove(state, direction) — pure 2-D operation built on merge.ts
     spawn.ts         # spawnTile(state, rng) — pure; takes RNG so it is testable
-    win.ts           # hasWon(state), hasLost(state)
-    game.ts          # advanceGame(state, action) — single pure reducer; createInitialState(rng, overrides)
+    win.ts           # hasWon(state), hasLost(state), maxTile(state)
+    game.ts          # advanceGame(state, action, rng) reducer; createInitialState(rng, opts); canUndo; reachedTarget
+    autopilot.ts     # chooseMove — expectimax-lite demo driver on the real applyMove
+    persist.ts       # is2048State — strict saved-session validator
   hooks/
-    useKeyboardMove.ts       # arrows + WASD + space/P/C/R; single listener; preventDefault on arrows
+    useKeyboardMove.ts       # arrows + WASD + Space/Enter/P/Esc/C/U/R; single listener; shouldIgnoreKey
     useSwipeInput.ts         # touchstart/move/end on the board; threshold + dominant-axis; preventDefault to stop page scroll
-    useHighScore.ts          # localStorage-backed best score; writes only on new best; key '2048.highScore'
-    useElapsedSeconds.ts     # real-time mm:ss timer that pauses with the game
   components/
-    GameBoard.tsx     # 4×4 background grid + absolutely positioned Tile children; receives swipe handlers
-    Tile.tsx          # single tile, keyed by tile.id; transform-based positioning + transition; spawn/merge classes
-    ScoreBoard.tsx    # score + best + moves + status
-    GameControls.tsx  # new game / continue (after win) / restart
-    Overlay.tsx       # idle / paused / won / gameOver
-  styles/
-  App.tsx             # state machine + wiring
-  main.tsx            # React entry
+    GameBoard.tsx     # 4×4 grid + absolutely positioned Tile children (full + mini variant)
+    Tile.tsx          # single tile, keyed by tile.id; transform-based positioning + transition
+    GameBoard.module.css
+  demo/Game2048Demo.tsx  # landing-page attract mode (no keys, stats or saves)
+  Game2048.tsx        # embeddable game (ArcadeGameProps), state machine + wiring
+  App.tsx             # standalone page: <ArcadeShell gameId="2048"><Game2048/></ArcadeShell>
+  main.tsx            # entry, imports arcade/arcade.css once
+  index.ts            # package entry for Arcade-Game-Center
 ```
+
+Stats, best score, session autosave, theme, score panel and overlays come from `src/arcade/`
+(`useArcadeRun`, `useSessionAutosave`, `useRestoredSession`, `useRunTimer`, `StatPanel`, `GameOverlay`, …).
+Change the kit only in Arcade-Game-Center and sync it. The same `src/` is mirrored into
+`Arcade-Game-Center/apps/2048/` — keep them identical.
 
 Use this layout only after confirming what is already on disk. If the repo diverges, follow the existing convention and flag the divergence — do not silently restructure.
 
@@ -84,7 +95,7 @@ A central pure reducer — `advanceGame(state, action): GameState` — owns ever
 
 ```ts
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
-type GameStatus = 'idle' | 'running' | 'paused' | 'won' | 'gameOver';
+type GameStatus = 'running' | 'paused' | 'won' | 'gameOver';
 
 type Tile = {
   id: number;             // stable identity across moves; React key; survives slides, replaced on merges
@@ -101,11 +112,11 @@ type GameState = {
   size: 4;                       // hard-coded in v1
   status: GameStatus;
   score: number;
-  best: number;                  // mirror of localStorage; recomputed on load
   hasWon: boolean;               // sticky once a 2048 tile has appeared
   continueAfterWin: boolean;     // true once the user picks "continue"
   moveCount: number;
   nextTileId: number;            // monotonic counter for fresh ids
+  history: HistorySnapshot[];    // pre-move snapshots for undo, newest first, max 2
 };
 
 type GameAction =
@@ -114,7 +125,8 @@ type GameAction =
   | { type: 'pause' }
   | { type: 'resume' }
   | { type: 'continueAfterWin' }
-  | { type: 'restart' };
+  | { type: 'restart' }
+  | { type: 'undo' };
 ```
 
 Deviate only if the repo already uses a cleaner model. The `tiles` array — not a 4×4 matrix — is the canonical state. A `Board = (Tile | null)[][]` view is *derived* in pure helpers when needed for collision / merge math.
@@ -123,11 +135,11 @@ Deviate only if the repo already uses a cleaner model. The `tiles` array — not
 
 ## Functional Requirements
 
-State machine: `idle → running ↔ paused → won → (continue) → running → gameOver → (restart) → idle/running`.
+State machine: `running ↔ paused`, `running → won → (continue) → running`, `running → gameOver → (restart) → running`.
 
 Required behavior: fixed 4×4 grid, canonical `tiles[]` state, weighted random spawn (90% → 2, 10% → 4) on every successful move, four-direction slide-and-merge with merge-once invariant per tile per move, score update on merge, sticky win at 2048 with optional continue, lose detection on full board with no adjacent equals, full restart resets every field of `GameState`, keyboard input (arrows + WASD), touch input (swipe with directional threshold), CSS-only slide and pop animations.
 
-Out of scope for v1 unless asked: undo/redo, configurable board size, alternative win targets, multiplayer, sound, skins, themes, leaderboard beyond `localStorage`.
+Shipped beyond v1: undo (last 2 moves), autosave & resume, arcade stats, demo autopilot. Out of scope unless asked: redo, configurable board size, alternative win targets, multiplayer, sound, skins, themes, custom themes beyond the arcade light/dark theme.
 
 ---
 
@@ -135,11 +147,11 @@ Out of scope for v1 unless asked: undo/redo, configurable board size, alternativ
 
 Two input sources, one dispatch pipeline.
 
-* **Keyboard** (`useKeyboardMove`): single `keydown` listener attached once per mount, removed on unmount. Arrows and `WASD` dispatch `{ type: 'move', direction }`. `Space`/`P` toggles pause. `C` triggers `continueAfterWin`. `R` triggers restart. Arrow keys must call `event.preventDefault()` so the page never scrolls during play. Keys other than the listed ones are ignored.
+* **Keyboard** (`useKeyboardMove`): single `keydown` listener attached once per mount, removed on unmount; handlers are read from a ref; every event first goes through the kit's `shouldIgnoreKey` (form fields, Cmd/Ctrl/Alt). Arrows and `WASD` dispatch `{ type: 'move', direction }`. `P`/`Esc` toggle pause, `Space`/`Enter` are the primary action. `C` triggers `continueAfterWin`, `U` undo, `R` restart. Arrow keys must call `event.preventDefault()` so the page never scrolls during play. Keys other than the listed ones are ignored.
 
 * **Touch** (`useSwipeInput`): listeners on the `GameBoard` root, not on `window`. `touchstart` records the origin; `touchmove` calls `event.preventDefault()` once the pointer leaves a small dead zone (so the page does not scroll mid-swipe); `touchend` resolves the swipe. Direction is decided by the dominant axis of `(dx, dy)`; a swipe under a minimum threshold (e.g. 30 px) is dropped as a tap. Successful swipes dispatch the same `{ type: 'move', direction }` action as the keyboard.
 
-No input is accepted in `paused`, `won`, or `gameOver` except the status-changing keys (`P`, `C`, `R`). Touch input is suppressed in those states for symmetry.
+No moves are accepted in `paused`, `won`, or `gameOver` — only the status-changing keys (and undo on the win overlay). Touch input is suppressed in those states for symmetry.
 
 ---
 
@@ -191,8 +203,8 @@ Before concluding any 2048 task, confirm each item was checked — or explicitly
 * **Continue does not reset**: `continueAfterWin = true` only changes status from `won` to `running`. Score, best, tiles, moves, hasWon — all carry over.
 * **Lose detection runs after spawn**: a board that becomes full mid-move but where the spawned tile creates a legal merge is **not** game over.
 * **Lose detection is exhaustive**: every cell occupied AND no orthogonally adjacent pair shares a value (checked in both axes) ⇒ `gameOver`.
-* **Best score never regresses**: `useHighScore.recordScore(s)` writes only when `s > best`. The `localStorage` key is `2048.highScore`.
-* **Restart resets everything**: `tiles`, `score`, `status`, `hasWon`, `continueAfterWin`, `moveCount`, `nextTileId` — all reinitialised. `best` survives.
+* **Best score never regresses**: the kit records each finished run once; Best shown is `max(stats.best, score)`.
+* **Restart resets everything**: `tiles`, `score`, `status`, `hasWon`, `continueAfterWin`, `moveCount`, `nextTileId` — `history` — all reinitialised, and the run gets a new `runKey`.
 * **Keyboard hygiene**: single listener per mount, cleaned up on unmount, no duplicates accumulate across renders, arrows call `preventDefault`.
 * **Touch hygiene**: listeners attached to the board element (not `window`), `touchmove` calls `preventDefault` once a swipe is in progress, swipe under threshold is treated as a tap (no dispatch).
 * **Animation never blocks logic**: the next move can be dispatched while animations are mid-flight. `applyMove` runs against the canonical post-merge state, never the visual one.
@@ -226,3 +238,12 @@ End every meaningful change with:
 ---
 
 **Guiding principle**: correctness over speed, verification over confidence, truth over fluency, small safe diffs over large rewrites. When in doubt — inspect more, assume less, change less, state uncertainty clearly.
+
+---
+
+## Git & Commit Rules
+
+- Commit **only** as `Zoltán Dul <zoltan.dul@gmail.com>` (the global git identity).
+- **Never** add `Co-Authored-By: Claude …`, "Generated with Claude Code" or any AI attribution
+  to commit messages or pull-request descriptions.
+- Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`).
