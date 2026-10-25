@@ -5,8 +5,6 @@ export const SPAWN_FOUR_PROBABILITY = 0.1 as const;
 
 export const ANIMATION_MS = 120 as const;
 
-export const HIGH_SCORE_KEY = '2048.highScore' as const;
-
 export type TileColor = { bg: string; fg: string };
 
 export const TILE_COLORS: Record<number, TileColor> = {

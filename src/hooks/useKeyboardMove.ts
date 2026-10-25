@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { Direction, GameAction, GameStatus } from '../logic/types';
+import { ARCADE_KEYS, isKey, shouldIgnoreKey } from '../arcade';
+import type { Direction } from '../logic/types';
 
 const DIRECTION_BY_KEY: Record<string, Direction> = {
   ArrowUp: 'UP',
@@ -18,47 +19,64 @@ const DIRECTION_BY_KEY: Record<string, Direction> = {
 
 const ARROW_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
-export function useKeyboardMove(
-  status: GameStatus,
-  dispatch: (action: GameAction) => void,
-) {
-  const statusRef = useRef(status);
-  statusRef.current = status;
+export type KeyboardMoveHandlers = {
+  onMove: (direction: Direction) => void;
+  /** Space / Enter: pause/resume, continue after a win, new game when over. */
+  onPrimary: () => void;
+  /** P / Esc. */
+  onTogglePause: () => void;
+  /** R. */
+  onRestart: () => void;
+  /** C — keep playing after reaching 2048. */
+  onContinue: () => void;
+  /** U — undo the last move. */
+  onUndo: () => void;
+};
+
+/**
+ * One window listener for the lifetime of the component; handlers are read
+ * from a ref so re-renders never re-subscribe. Typing in form fields and
+ * modifier shortcuts (Cmd+R, Ctrl+W, …) are left to the browser.
+ */
+export function useKeyboardMove(handlers: KeyboardMoveHandlers): void {
+  const ref = useRef(handlers);
+  ref.current = handlers;
 
   useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.repeat) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (shouldIgnoreKey(event)) return;
+      const h = ref.current;
+
       const direction = DIRECTION_BY_KEY[event.key];
       if (direction) {
         if (ARROW_KEYS.has(event.key)) event.preventDefault();
-        dispatch({ type: 'move', direction });
+        if (!event.repeat) h.onMove(direction);
         return;
       }
-      switch (event.key) {
-        case ' ':
-        case 'p':
-        case 'P': {
-          event.preventDefault();
-          if (statusRef.current === 'running') dispatch({ type: 'pause' });
-          else if (statusRef.current === 'paused') dispatch({ type: 'resume' });
-          break;
-        }
-        case 'c':
-        case 'C': {
-          dispatch({ type: 'continueAfterWin' });
-          break;
-        }
-        case 'r':
-        case 'R': {
-          dispatch({ type: 'restart' });
-          break;
-        }
-        default:
-          break;
+      if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        if (!event.repeat) h.onPrimary();
+        return;
       }
-    }
+      if (isKey(event, ARCADE_KEYS.pause)) {
+        event.preventDefault();
+        h.onTogglePause();
+        return;
+      }
+      if (isKey(event, ARCADE_KEYS.restart)) {
+        h.onRestart();
+        return;
+      }
+      if (event.key === 'c' || event.key === 'C') {
+        h.onContinue();
+        return;
+      }
+      if (event.key === 'u' || event.key === 'U') {
+        h.onUndo();
+      }
+    };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [dispatch]);
+  }, []);
 }

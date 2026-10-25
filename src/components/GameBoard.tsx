@@ -2,30 +2,35 @@ import { forwardRef } from 'react';
 import { GRID_SIZE } from '../logic/constants';
 import type { Tile as TileType } from '../logic/types';
 import { Tile } from './Tile';
+import styles from './GameBoard.module.css';
 
 type GameBoardProps = {
   tiles: TileType[];
+  /** `mini` renders the compact landing-page variant, hidden from assistive tech. */
+  variant?: 'full' | 'mini';
 };
 
+const CELLS = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => i);
+
 export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function GameBoard(
-  { tiles },
+  { tiles, variant = 'full' },
   ref,
 ) {
-  const cells: React.ReactNode[] = [];
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-      cells.push(<div key={`${r}-${c}`} className="board__cell" />);
-    }
-  }
-
+  const mini = variant === 'mini';
   return (
     <div
       ref={ref}
-      className="board"
-      style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`, gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)` }}
+      className={`${styles.board} ${mini ? styles.mini : ''}`}
+      role={mini ? undefined : 'group'}
+      aria-label={mini ? undefined : '2048 board'}
+      aria-hidden={mini ? true : undefined}
     >
-      <div className="board__grid">{cells}</div>
-      <div className="board__tiles">
+      <div className={styles.grid}>
+        {CELLS.map((i) => (
+          <div key={i} className={styles.cell} />
+        ))}
+      </div>
+      <div className={styles.tiles}>
         {tiles.map((tile) => (
           <Tile key={tile.id} tile={tile} />
         ))}

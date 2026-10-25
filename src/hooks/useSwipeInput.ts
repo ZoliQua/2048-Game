@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Direction, GameAction } from '../logic/types';
+import type { Direction } from '../logic/types';
 
 const SWIPE_THRESHOLD_PX = 30;
 
@@ -8,13 +8,10 @@ const SWIPE_THRESHOLD_PX = 30;
  * touch listeners are required so `preventDefault` actually suppresses the
  * page scroll mid-swipe — React's synthetic onTouchMove is passive by default.
  */
-export function useSwipeInput(
-  enabled: boolean,
-  dispatch: (action: GameAction) => void,
-) {
+export function useSwipeInput(enabled: boolean, onSwipe: (direction: Direction) => void) {
   const boardRef = useRef<HTMLDivElement | null>(null);
-  const dispatchRef = useRef(dispatch);
-  dispatchRef.current = dispatch;
+  const onSwipeRef = useRef(onSwipe);
+  onSwipeRef.current = onSwipe;
 
   useEffect(() => {
     const node = boardRef.current;
@@ -59,7 +56,7 @@ export function useSwipeInput(
       let direction: Direction;
       if (ax > ay) direction = dx > 0 ? 'RIGHT' : 'LEFT';
       else direction = dy > 0 ? 'DOWN' : 'UP';
-      dispatchRef.current({ type: 'move', direction });
+      onSwipeRef.current(direction);
     };
 
     node.addEventListener('touchstart', onStart, { passive: true });

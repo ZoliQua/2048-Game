@@ -1,0 +1,130 @@
+.board {
+  --gap: 12px;
+  --radius: 8px;
+  position: relative;
+  width: min(72vmin, 500px);
+  aspect-ratio: 1 / 1;
+  padding: var(--gap);
+  container-type: inline-size;
+  background: color-mix(in oklab, var(--game-2048) 22%, var(--panel-bg-soft));
+  border: 1px solid var(--panel-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  touch-action: none;
+  user-select: none;
+}
+
+.mini {
+  --gap: 4px;
+  --radius: 4px;
+  width: auto;
+  height: 88%;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.grid {
+  position: absolute;
+  inset: var(--gap);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: var(--gap);
+}
+
+.cell {
+  background: color-mix(in oklab, var(--grid-empty) 90%, var(--game-2048));
+  border-radius: var(--radius);
+}
+
+.tiles {
+  position: absolute;
+  inset: var(--gap);
+}
+
+.tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 11cqi;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition-property: transform;
+  transition-timing-function: ease-out;
+  pointer-events: none;
+  /* width / height / transform are set inline; sizing is the exact cell size. */
+}
+
+.tile span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--tile-bg, transparent);
+  color: inherit;
+}
+
+.sm {
+  font-size: 9cqi;
+}
+
+.xs {
+  font-size: 7cqi;
+}
+
+.xxs {
+  font-size: 5.6cqi;
+}
+
+@keyframes tile-spawn {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tile-merge {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.spawn span {
+  animation: tile-spawn 160ms ease-out;
+  transform-origin: center;
+}
+
+.merge span {
+  animation: tile-merge 180ms ease-out 80ms;
+  transform-origin: center;
+}
+
+.dying {
+  opacity: 0.001;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+
+  .spawn span,
+  .merge span {
+    animation: none;
+  }
+}

@@ -1,27 +1,25 @@
 import { applyMove } from './move';
 import { spawnTile } from './spawn';
 import { UNDO_LIMIT } from './types';
-import { hasLost, hasWon } from './win';
+import { hasLost, hasWon, maxTile } from './win';
 import type { GameAction, GameState, HistorySnapshot, Rng, Tile } from './types';
+import { TARGET_VALUE } from './constants';
 
-export type CreateInitialOptions = {
-  best?: number;
-};
+export type CreateInitialOptions = Partial<Pick<GameState, 'status'>>;
 
+/** A fresh 4×4 board with two spawned tiles, ready to play (`running`). */
 export function createInitialState(rng: Rng, options: CreateInitialOptions = {}): GameState {
-  const empty: GameState = {
+  let state: GameState = {
     tiles: [],
     size: 4,
-    status: 'idle',
+    status: options.status ?? 'running',
     score: 0,
-    best: options.best ?? 0,
     hasWon: false,
     continueAfterWin: false,
     moveCount: 0,
     nextTileId: 1,
     history: [],
   };
-  let state = empty;
   for (let i = 0; i < 2; i++) {
     const { tile, nextTileId } = spawnTile(state, rng);
     if (!tile) break;
@@ -30,14 +28,18 @@ export function createInitialState(rng: Rng, options: CreateInitialOptions = {})
   return state;
 }
 
+/** Tiles without the one-render animation flags (and without dying tiles). */
+export function settledTiles(tiles: readonly Tile[]): Tile[] {
+  return tiles
+    .filter((t) => !t.isDying)
+    .map((t) => ({ id: t.id, value: t.value, row: t.row, col: t.col }));
+}
+
 function snapshot(state: GameState): HistorySnapshot {
   // Drop the volatile per-move animation flags so an undo restore lands on a
   // visually quiet board (no spurious spawn-pop or merge-pulse triggered).
-  const tiles: Tile[] = state.tiles
-    .filter((t) => !t.isDying)
-    .map((t) => ({ id: t.id, value: t.value, row: t.row, col: t.col }));
   return {
-    tiles,
+    tiles: settledTiles(state.tiles),
     size: state.size,
     status: state.status,
     score: state.score,
@@ -57,10 +59,20 @@ function clearVolatileFlags(tiles: Tile[]): Tile[] {
   });
 }
 
+/** True when the run reached the 2048 target (used for the run outcome). */
+export function reachedTarget(state: GameState): boolean {
+  return state.hasWon || maxTile(state) >= TARGET_VALUE;
+}
+
+/** True while undo has something to restore and input is accepted. */
+export function canUndo(state: GameState): boolean {
+  return state.history.length > 0 && (state.status === 'running' || state.status === 'won');
+}
+
 export function advanceGame(state: GameState, action: GameAction, rng: Rng): GameState {
   switch (action.type) {
     case 'restart': {
-      return createInitialState(rng, { best: state.best });
+      return createInitialState(rng);
     }
     case 'pause': {
       if (state.status !== 'running') return state;
@@ -72,40 +84,29 @@ export function advanceGame(state: GameState, action: GameAction, rng: Rng): Gam
     }
     case 'continueAfterWin': {
       if (state.status !== 'won') return state;
-      return { ...state, status: 'running', continueAfterWin: true };
+      // The winning move may also have filled the board: continuing then ends the run.
+      return { ...state, status: hasLost(state) ? 'gameOver' : 'running', continueAfterWin: true };
     }
     case 'commitAnimation': {
       const liveTiles = state.tiles.filter((t) => !t.isDying);
       const cleared = clearVolatileFlags(liveTiles);
-      if (cleared.length === state.tiles.length) {
-        let identical = true;
-        for (let i = 0; i < cleared.length; i++) {
-          if (cleared[i] !== state.tiles[i]) {
-            identical = false;
-            break;
-          }
-        }
-        if (identical) return state;
+      if (cleared.length === state.tiles.length && cleared.every((t, i) => t === state.tiles[i])) {
+        return state;
       }
       return { ...state, tiles: cleared };
     }
     case 'move': {
-      if (state.status !== 'idle' && state.status !== 'running') return state;
+      if (state.status !== 'running') return state;
 
       const result = applyMove(state, action.direction);
       if (!result.changed) return state;
 
-      const preMoveSnapshot = snapshot(state);
-
-      const newScore = state.score + result.scoreDelta;
       const movedState: GameState = {
         ...state,
         tiles: result.tiles,
-        score: newScore,
-        best: Math.max(state.best, newScore),
+        score: state.score + result.scoreDelta,
         nextTileId: result.nextTileId,
         moveCount: state.moveCount + 1,
-        status: 'running',
       };
 
       const { tile: spawned, nextTileId: afterSpawnId } = spawnTile(movedState, rng);
@@ -114,28 +115,23 @@ export function advanceGame(state: GameState, action: GameAction, rng: Rng): Gam
         : movedState;
 
       const justWon = !state.hasWon && (result.reachedTarget || hasWon(afterSpawn));
-      const stickyWon = state.hasWon || justWon;
       const overlayWon = justWon && !state.continueAfterWin;
 
-      let nextStatus = afterSpawn.status;
-      if (overlayWon) nextStatus = 'won';
-      else if (hasLost(afterSpawn)) nextStatus = 'gameOver';
+      let status: GameState['status'] = 'running';
+      if (overlayWon) status = 'won';
+      else if (hasLost(afterSpawn)) status = 'gameOver';
 
       return {
         ...afterSpawn,
-        hasWon: stickyWon,
-        status: nextStatus,
-        history: [preMoveSnapshot, ...state.history].slice(0, UNDO_LIMIT),
+        hasWon: state.hasWon || justWon,
+        status,
+        history: [snapshot(state), ...state.history].slice(0, UNDO_LIMIT),
       };
     }
     case 'undo': {
+      if (!canUndo(state)) return state;
       const [prev, ...rest] = state.history;
-      if (!prev) return state;
-      return {
-        ...prev,
-        best: state.best,
-        history: rest,
-      };
+      return { ...prev!, history: rest };
     }
   }
 }

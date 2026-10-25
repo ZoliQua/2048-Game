@@ -27,3 +27,12 @@ export function hasLost(state: GameState): boolean {
   }
   return true;
 }
+
+/** Highest live tile value on the board (0 on an empty board). */
+export function maxTile(state: Pick<GameState, 'tiles'>): number {
+  let max = 0;
+  for (const tile of state.tiles) {
+    if (!tile.isDying && tile.value > max) max = tile.value;
+  }
+  return max;
+}

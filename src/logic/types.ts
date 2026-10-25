@@ -1,6 +1,11 @@
 export type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 
-export type GameStatus = 'idle' | 'running' | 'paused' | 'won' | 'gameOver';
+/**
+ * 2048 has no "idle" phase: a fresh board is immediately `running` (the run
+ * clock starts with the first move). `won` is the win/continue choice shown
+ * when the first 2048 tile appears; the arcade layer treats it like a pause.
+ */
+export type GameStatus = 'running' | 'paused' | 'won' | 'gameOver';
 
 export type Tile = {
   id: number;
@@ -17,7 +22,6 @@ export type GameState = {
   size: 4;
   status: GameStatus;
   score: number;
-  best: number;
   hasWon: boolean;
   continueAfterWin: boolean;
   moveCount: number;
@@ -27,11 +31,9 @@ export type GameState = {
 
 /**
  * Snapshot taken just before a move is applied, so `undo` can roll back the
- * exact pre-move state. `best` and `history` itself are never rolled back —
- * `best` is the running max across the session, and stacking `history` inside
- * `history` would balloon the snapshot.
+ * exact pre-move state. `history` itself is never nested inside a snapshot.
  */
-export type HistorySnapshot = Omit<GameState, 'best' | 'history'>;
+export type HistorySnapshot = Omit<GameState, 'history'>;
 
 export const UNDO_LIMIT = 2 as const;
 
