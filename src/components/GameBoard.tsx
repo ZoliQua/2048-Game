@@ -8,12 +8,14 @@ type GameBoardProps = {
   tiles: TileType[];
   /** `mini` renders the compact landing-page variant, hidden from assistive tech. */
   variant?: 'full' | 'mini';
+  /** Accessible name of the full board. */
+  label?: string;
 };
 
 const CELLS = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => i);
 
 export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function GameBoard(
-  { tiles, variant = 'full' },
+  { tiles, variant = 'full', label = '2048 board' },
   ref,
 ) {
   const mini = variant === 'mini';
@@ -22,7 +24,7 @@ export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function Gam
       ref={ref}
       className={`${styles.board} ${mini ? styles.mini : ''}`}
       role={mini ? undefined : 'group'}
-      aria-label={mini ? undefined : '2048 board'}
+      aria-label={mini ? undefined : label}
       aria-hidden={mini ? true : undefined}
     >
       <div className={styles.grid}>

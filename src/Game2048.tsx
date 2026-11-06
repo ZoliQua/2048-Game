@@ -2,11 +2,16 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import {
   clearSession,
   formatClock,
+  formatNumber,
+  gameName,
   GameOverlay,
   KeyHelp,
   SaveBadge,
   StatPanel,
   useArcadeRun,
+  useKitMessages,
+  useLang,
+  useMessages,
   useRestoredSession,
   useRunTimer,
   useSessionAutosave,
@@ -17,6 +22,7 @@ import {
 import { GameBoard } from './components/GameBoard';
 import { useKeyboardMove } from './hooks/useKeyboardMove';
 import { useSwipeInput } from './hooks/useSwipeInput';
+import { MESSAGES } from './i18n';
 import { ANIMATION_MS } from './logic/constants';
 import { advanceGame, canUndo, createInitialState, reachedTarget, settledTiles } from './logic/game';
 import { is2048State } from './logic/persist';
@@ -29,14 +35,6 @@ const SESSION_SCHEMA = 1;
 
 const rng = () => Math.random();
 
-const KEYS: [string, string][] = [
-  ['← ↑ → ↓', 'Slide (or WASD, or swipe)'],
-  ['U', 'Undo (last 2 moves)'],
-  ['Space', 'Pause / resume'],
-  ['P Esc', 'Pause / resume'],
-  ['C', 'Keep going after 2048'],
-  ['R', 'New game'],
-];
 
 const ARCADE_STATUS: Record<GameStatus, ArcadeStatus> = {
   running: 'running',
@@ -63,6 +61,10 @@ function restoreState(data: GameState): GameState {
 
 export function Game2048(props: ArcadeGameProps = {}) {
   const { embedded = false } = props;
+  const t = useMessages(MESSAGES);
+  const k = useKitMessages();
+  const [lang] = useLang();
+  const num = (n: number) => formatNumber(n, lang);
   const restored = useRestoredSession<GameState>('2048', SESSION_SCHEMA, isResumable);
   const [state, setState] = useState<GameState>(() =>
     restored ? restoreState(restored.data) : createInitialState(rng),
@@ -167,35 +169,40 @@ export function Game2048(props: ArcadeGameProps = {}) {
   if (state.status === 'paused') {
     overlay = welcomeBack
       ? {
-          title: 'Welcome back',
-          message: `Your saved run was restored — score ${state.score}, max tile ${max}, ${formatClock(seconds)} played.`,
+          title: k('welcomeBack'),
+          message: t('welcomeMessage', { score: num(state.score), max, time: formatClock(seconds) }),
           actions: [
-            { label: 'Continue', onClick: togglePause, primary: true, kbd: 'P' },
-            { label: 'New game', onClick: startNewRun, kbd: 'R' },
+            { label: t('continue'), onClick: togglePause, primary: true, kbd: 'P' },
+            { label: k('newGame'), onClick: startNewRun, kbd: 'R' },
           ],
         }
       : {
-          title: 'Paused',
-          message: 'Your run is autosaved — you can close the tab and continue later.',
+          title: k('paused'),
+          message: t('pausedMessage'),
           actions: [
-            { label: 'Resume', onClick: togglePause, primary: true, kbd: 'P' },
-            { label: 'New game', onClick: startNewRun, kbd: 'R' },
+            { label: k('resume'), onClick: togglePause, primary: true, kbd: 'P' },
+            { label: k('newGame'), onClick: startNewRun, kbd: 'R' },
           ],
         };
   } else if (state.status === 'won') {
     overlay = {
-      title: 'You win!',
-      message: `You made 2048 with ${state.score} points. Keep going for a higher tile?`,
+      title: t('youWin'),
+      message: t('winMessage', { score: num(state.score) }),
       actions: [
-        { label: 'Keep going', onClick: continueAfterWin, primary: true, kbd: 'C' },
-        { label: 'New game', onClick: startNewRun, kbd: 'R' },
+        { label: t('keepGoing'), onClick: continueAfterWin, primary: true, kbd: 'C' },
+        { label: k('newGame'), onClick: startNewRun, kbd: 'R' },
       ],
     };
   } else if (state.status === 'gameOver') {
     overlay = {
-      title: reachedTarget(state) ? 'No moves left — 2048 reached!' : 'Game over',
-      message: `Score ${state.score} · Best ${best}${newBest ? ' — new best!' : ''} · Max tile ${max}`,
-      actions: [{ label: 'Play again', onClick: startNewRun, primary: true, kbd: 'R' }],
+      title: reachedTarget(state) ? t('noMovesWon') : k('gameOver'),
+      message: t('gameOverMessage', {
+        score: num(state.score),
+        best: num(best),
+        newBest: newBest ? t('newBestSuffix') : '',
+        max,
+      }),
+      actions: [{ label: t('playAgain'), onClick: startNewRun, primary: true, kbd: 'R' }],
     };
   }
 
@@ -204,39 +211,39 @@ export function Game2048(props: ArcadeGameProps = {}) {
       {!embedded && (
         <header className="arc-game__head">
           <div>
-            <h1 className="arc-game__title">2048</h1>
-            <p className="arc-game__sub">Slide tiles, merge equal numbers, reach 2048 — and beyond.</p>
+            <h1 className="arc-game__title">{gameName('2048', lang)}</h1>
+            <p className="arc-game__sub">{t('subtitle')}</p>
           </div>
         </header>
       )}
 
       <StatPanel
         status={status}
-        statusLabel={state.status === 'won' ? 'You win!' : undefined}
+        statusLabel={state.status === 'won' ? t('youWin') : undefined}
         items={[
-          { label: 'Score', value: state.score },
-          { label: 'Best', value: best, highlight: newBest },
-          { label: 'Max tile', value: max },
-          { label: 'Moves', value: state.moveCount },
-          { label: 'Time', value: formatClock(seconds) },
+          { label: k('score'), value: num(state.score) },
+          { label: k('best'), value: num(best), highlight: newBest },
+          { label: t('maxTile'), value: max },
+          { label: k('moves'), value: num(state.moveCount) },
+          { label: k('time'), value: formatClock(seconds) },
         ]}
       />
 
       <div className={styles.layout}>
         <div className={`arc-game__board ${styles.boardWrap}`}>
-          <GameBoard ref={boardRef} tiles={state.tiles} />
+          <GameBoard ref={boardRef} tiles={state.tiles} label={t('board')} />
           {overlay && <GameOverlay {...overlay} />}
         </div>
 
         <aside className={styles.side}>
           <section className="arc-panel">
-            <h2 className="arc-panel__title">Game</h2>
+            <h2 className="arc-panel__title">{t('panelGame')}</h2>
             <div className={styles.buttons}>
               <button type="button" className="arc-btn arc-btn--primary" onClick={startNewRun}>
-                New game
+                {k('newGame')}
               </button>
               <button type="button" className="arc-btn" onClick={undo} disabled={!undoable}>
-                Undo
+                {t('undo')}
               </button>
               <button
                 type="button"
@@ -244,7 +251,7 @@ export function Game2048(props: ArcadeGameProps = {}) {
                 onClick={togglePause}
                 disabled={state.status !== 'running' && state.status !== 'paused'}
               >
-                {state.status === 'paused' ? 'Resume' : 'Pause'}
+                {state.status === 'paused' ? k('resume') : k('pause')}
               </button>
             </div>
             <div className={styles.save}>
@@ -253,17 +260,22 @@ export function Game2048(props: ArcadeGameProps = {}) {
           </section>
 
           <section className="arc-panel">
-            <h2 className="arc-panel__title">How to play</h2>
-            <p className={styles.help}>
-              Every slide moves all tiles as far as they go; two equal tiles merge into their sum, which is added to
-              your score. A new 2 (or 4) appears after each move. Reach the 2048 tile to win — then keep going until
-              no moves are left.
-            </p>
+            <h2 className="arc-panel__title">{t('panelHowTo')}</h2>
+            <p className={styles.help}>{t('howToPlay')}</p>
           </section>
 
           <section className="arc-panel">
-            <h2 className="arc-panel__title">Keys</h2>
-            <KeyHelp rows={KEYS} />
+            <h2 className="arc-panel__title">{t('panelKeys')}</h2>
+            <KeyHelp
+              rows={[
+                ['← ↑ → ↓', t('keySlide')],
+                ['U', t('keyUndo')],
+                [t('keySpace'), t('keyPauseResume')],
+                ['P Esc', t('keyPauseResume')],
+                ['C', t('keyKeepGoing')],
+                ['R', k('newGame')],
+              ]}
+            />
           </section>
         </aside>
       </div>
