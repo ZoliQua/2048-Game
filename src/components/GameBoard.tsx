@@ -10,12 +10,14 @@ type GameBoardProps = {
   variant?: 'full' | 'mini';
   /** Accessible name of the full board. */
   label?: string;
+  /** Dental mode tile art. Presentation only. */
+  dental?: boolean;
 };
 
 const CELLS = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => i);
 
 export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function GameBoard(
-  { tiles, variant = 'full', label = '2048 board' },
+  { tiles, variant = 'full', label = '2048 board', dental = false },
   ref,
 ) {
   const mini = variant === 'mini';
@@ -26,6 +28,7 @@ export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function Gam
       role={mini ? undefined : 'group'}
       aria-label={mini ? undefined : label}
       aria-hidden={mini ? true : undefined}
+      data-dental={dental}
     >
       <div className={styles.grid}>
         {CELLS.map((i) => (
@@ -34,7 +37,7 @@ export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function Gam
       </div>
       <div className={styles.tiles}>
         {tiles.map((tile) => (
-          <Tile key={tile.id} tile={tile} />
+          <Tile key={tile.id} tile={tile} dental={dental} />
         ))}
       </div>
     </div>

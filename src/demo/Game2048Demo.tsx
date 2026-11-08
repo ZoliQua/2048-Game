@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ArcadeDemoProps } from '../arcade';
+import { useDental, type ArcadeDemoProps } from '../arcade';
 import { GameBoard } from '../components/GameBoard';
 import { chooseMove } from '../logic/autopilot';
 import { advanceGame, createInitialState } from '../logic/game';
@@ -27,6 +27,7 @@ function step(prev: GameState): GameState {
  */
 export function Game2048Demo({ active = true }: ArcadeDemoProps) {
   const [state, setState] = useState(freshDemo);
+  const [dental] = useDental();
   const finished = state.status !== 'running';
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export function Game2048Demo({ active = true }: ArcadeDemoProps) {
 
   return (
     <div className="arc-demo">
-      <GameBoard tiles={state.tiles} variant="mini" />
+      <GameBoard tiles={state.tiles} variant="mini" dental={dental} />
     </div>
   );
 }

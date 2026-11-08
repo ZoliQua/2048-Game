@@ -128,3 +128,52 @@
     animation: none;
   }
 }
+
+/* ---------- Dental mode: tooth art above the number, growing with the value ---------- */
+
+.dentalTile span {
+  flex-direction: column;
+  gap: 2%;
+  padding: 6% 4% 7%;
+  box-sizing: border-box;
+}
+
+.art {
+  display: block;
+  flex: 0 0 auto;
+  font-style: normal;
+}
+
+.artIcon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.18));
+}
+
+/* Size grows with the tier; each tier also has its own silhouette. */
+.milk {
+  width: 34%;
+  height: 34%;
+}
+
+.molar {
+  width: 44%;
+  height: 44%;
+}
+
+.smile {
+  width: 52%;
+  height: 52%;
+}
+
+.crown {
+  width: 56%;
+  height: 56%;
+}
+
+.dentalValue {
+  font-size: 0.62em;
+  font-weight: 800;
+  line-height: 1;
+}

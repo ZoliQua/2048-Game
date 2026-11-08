@@ -16,6 +16,7 @@ const en = {
   maxTile: 'Max tile',
   undo: 'Undo',
   panelGame: 'Game',
+  panelSettings: 'Settings',
   panelHowTo: 'How to play',
   panelKeys: 'Keys',
   howToPlay:
@@ -38,7 +39,7 @@ export const MESSAGES: Messages<Game2048MessageKey> = {
     continue: 'Folytatás',
     pausedMessage: 'A játékod automatikusan mentődik – nyugodtan bezárhatod a lapot, és később folytathatod.',
     youWin: 'Nyertél!',
-    winMessage: 'Kiraktad a 2048-at, {score} ponttal. Folytatod egy még nagyobb lapért?',
+    winMessage: 'Elérted a 2048-at {score} ponttal. Folytatod egy még nagyobb lapért?',
     keepGoing: 'Folytatom',
     noMovesWon: 'Nincs több lépés – de a 2048 megvan!',
     playAgain: 'Még egy kör',
@@ -47,6 +48,7 @@ export const MESSAGES: Messages<Game2048MessageKey> = {
     maxTile: 'Legnagyobb lap',
     undo: 'Visszavonás',
     panelGame: 'Játék',
+    panelSettings: 'Beállítások',
     panelHowTo: 'Így játssz',
     panelKeys: 'Billentyűk',
     howToPlay:
@@ -73,6 +75,7 @@ export const MESSAGES: Messages<Game2048MessageKey> = {
     maxTile: 'Höchste Kachel',
     undo: 'Rückgängig',
     panelGame: 'Spiel',
+    panelSettings: 'Einstellungen',
     panelHowTo: 'So wird gespielt',
     panelKeys: 'Tasten',
     howToPlay:

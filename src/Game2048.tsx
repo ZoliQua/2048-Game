@@ -9,6 +9,7 @@ import {
   SaveBadge,
   StatPanel,
   useArcadeRun,
+  useDental,
   useKitMessages,
   useLang,
   useMessages,
@@ -19,6 +20,7 @@ import {
   type ArcadeStatus,
   type OverlayAction,
 } from './arcade';
+import { DentalToggle } from './components/DentalToggle';
 import { GameBoard } from './components/GameBoard';
 import { useKeyboardMove } from './hooks/useKeyboardMove';
 import { useSwipeInput } from './hooks/useSwipeInput';
@@ -65,6 +67,7 @@ export function Game2048(props: ArcadeGameProps = {}) {
   const k = useKitMessages();
   const [lang] = useLang();
   const num = (n: number) => formatNumber(n, lang);
+  const [dental] = useDental();
   const restored = useRestoredSession<GameState>('2048', SESSION_SCHEMA, isResumable);
   const [state, setState] = useState<GameState>(() =>
     restored ? restoreState(restored.data) : createInitialState(rng),
@@ -231,7 +234,7 @@ export function Game2048(props: ArcadeGameProps = {}) {
 
       <div className={styles.layout}>
         <div className={`arc-game__board ${styles.boardWrap}`}>
-          <GameBoard ref={boardRef} tiles={state.tiles} label={t('board')} />
+          <GameBoard ref={boardRef} tiles={state.tiles} label={t('board')} dental={dental} />
           {overlay && <GameOverlay {...overlay} />}
         </div>
 
@@ -257,6 +260,11 @@ export function Game2048(props: ArcadeGameProps = {}) {
             <div className={styles.save}>
               <SaveBadge savedAt={inProgress ? savedAt : null} onDiscard={discardSave} />
             </div>
+          </section>
+
+          <section className="arc-panel">
+            <h2 className="arc-panel__title">{t('panelSettings')}</h2>
+            <DentalToggle hintClassName={styles.help} />
           </section>
 
           <section className="arc-panel">
