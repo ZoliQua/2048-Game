@@ -60,6 +60,8 @@ Every game is a standalone repo that also plugs into the portal. They share one 
 - 🏅 **Unified arcade stats** — best score, plays, wins, total time, shared with the portal
 - ⏱️ **Pause-aware run timer** that starts with your first move
 - 🌗 **Dark / light theme** shared with every arcade game (press **T**)
+- 🌍 **Three languages** — English, Hungarian and German; switch in the top bar or in the settings (also `?lang=en|hu|de` for link hand-off); numbers follow the locale's grouping
+- 🦷 **Dental mode** — a „Fogas mód” / "Dental mode" / „Zahnmodus” toggle in the settings, off by default (or `?dental=1`), shared across the whole arcade: the numbers stay, the tile art grows from a milk tooth through permanent teeth to a golden crown at 2048; presentation only
 - 🤖 **Attract-mode demo** (`<Game2048Demo />`) — the real engine played by an expectimax-lite autopilot, shown on the portal's landing page
 - ⌨️ **Keyboard-first**; hotkeys are ignored while you type in a form field or hold Cmd/Ctrl/Alt
 - 🧪 **Tested** — pure-logic unit tests plus component tests with Vitest + Testing Library
