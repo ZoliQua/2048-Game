@@ -27,6 +27,8 @@ export type GameState = {
   moveCount: number;
   nextTileId: number;
   history: HistorySnapshot[];
+  /** Set when the player used Finish: the run ended early and its score is ranked as it stands. */
+  finishedEarly?: boolean;
 };
 
 /**
@@ -44,7 +46,8 @@ export type GameAction =
   | { type: 'resume' }
   | { type: 'continueAfterWin' }
   | { type: 'restart' }
-  | { type: 'undo' };
+  | { type: 'undo' }
+  | { type: 'finish' };
 
 export type Rng = () => number;
 

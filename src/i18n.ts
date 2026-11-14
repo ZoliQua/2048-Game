@@ -27,6 +27,30 @@ const en = {
   keyUndo: 'Undo (last 2 moves)',
   keyPauseResume: 'Pause / resume',
   keyKeepGoing: 'Keep going after 2048',
+  touchSwipe: 'Swipe on the board',
+  touchSlide: 'Slide all tiles',
+  touchButtons: 'Undo / Pause buttons',
+  touchButtonsAction: 'Take back a move · pause',
+  rulesGoalBody:
+    'Slide the tiles on the 4×4 board and merge equal numbers. Make the {target} tile — then keep going for an even higher one until no move is left.',
+  rulesPlayKeys:
+    'Press the arrow keys or W A S D: every tile slides as far as it can in that direction. U takes back a move, P pauses.',
+  rulesPlayTouch:
+    'Swipe on the board: every tile slides as far as it can in the swipe direction. The Undo and Pause buttons are below the board.',
+  rulesRule1: 'Two tiles with the same number that meet merge into one tile with their sum.',
+  rulesRule2: 'A tile that has just merged cannot merge again in the same move.',
+  rulesRule3: 'After every move that changes the board, a new 2 (sometimes a 4) appears in an empty cell.',
+  rulesRule4: 'A move that changes nothing does not count and adds no tile.',
+  rulesRule5: 'The game is over when the board is full and no two neighbouring tiles are equal. Undo takes back the last 2 moves.',
+  rulesScoringBody: 'Every merge adds the value of the new tile to your score — there is no combo bonus. For example:',
+  rulesMerge: '{a} + {a} → {b}: +{b} points',
+  rulesDental:
+    'With dental mode on, the tiles show teeth — from a milk tooth up to a golden crown at {target}. The numbers and the rules stay the same.',
+  rulesMobileSwipe: 'Swipe on the board to slide the tiles; the page does not scroll while your finger is on it.',
+  rulesMobileButtons: 'Undo, Pause, Finish and Rules are buttons below the board.',
+  rulesMobileFullscreen: 'The Full screen button gives the game the whole display.',
+  diagramLabel: 'Diagram: two tiles with 8 merge into one tile with 16, scoring 16 points',
+  diagramPoints: '+{points} points',
 };
 
 export type Game2048MessageKey = keyof typeof en;
@@ -59,6 +83,30 @@ export const MESSAGES: Messages<Game2048MessageKey> = {
     keyUndo: 'Visszavonás (az utolsó 2 lépés)',
     keyPauseResume: 'Szünet / folytatás',
     keyKeepGoing: 'Folytatás a 2048 után',
+    touchSwipe: 'Húzás a táblán',
+    touchSlide: 'Minden lap elcsúszik',
+    touchButtons: 'Visszavonás / Szünet gomb',
+    touchButtonsAction: 'Lépés visszavonása · szünet',
+    rulesGoalBody:
+      'Csúsztasd a lapokat a 4×4-es táblán, és vond össze az egyforma számokat. Told ki a {target}-as lapot – utána folytathatod még nagyobbért, amíg van szabad lépés.',
+    rulesPlayKeys:
+      'Használd a nyílbillentyűket vagy a W A S D-t: minden lap addig csúszik az adott irányba, ameddig tud. Az U visszavon egy lépést, a P szünetet tart.',
+    rulesPlayTouch:
+      'Húzd az ujjad a táblán: minden lap addig csúszik a húzás irányába, ameddig tud. A Visszavonás és a Szünet gomb a tábla alatt van.',
+    rulesRule1: 'Két egyforma számú lap, ha összeér, eggyé olvad: a két szám összegévé.',
+    rulesRule2: 'Az éppen összeolvadt lap ugyanabban a lépésben nem olvadhat össze újra.',
+    rulesRule3: 'Minden olyan lépés után, amely változtat a táblán, új 2-es (néha 4-es) lap jelenik meg egy üres mezőn.',
+    rulesRule4: 'Az a lépés, amely semmin sem változtat, nem számít, és új lap sem jön.',
+    rulesRule5: 'Vége a játéknak, ha a tábla tele van, és nincs két szomszédos egyforma lap. A visszavonás az utolsó 2 lépést veszi vissza.',
+    rulesScoringBody: 'Minden összeolvadás az új lap értékét adja a pontszámodhoz – kombóbónusz nincs. Például:',
+    rulesMerge: '{a} + {a} → {b}: +{b} pont',
+    rulesDental:
+      'Fogas módban a lapokon fogak vannak – a tejfogtól az aranykoronáig, a {target}-as lapnál. A számok és a szabályok ugyanazok maradnak.',
+    rulesMobileSwipe: 'Húzd az ujjad a táblán a lapok csúsztatásához; amíg az ujjad rajta van, az oldal nem görög.',
+    rulesMobileButtons: 'A Visszavonás, Szünet, Befejezés és Szabályok gomb a tábla alatt található.',
+    rulesMobileFullscreen: 'A Teljes képernyő gomb az egész kijelzőt a játéknak adja.',
+    diagramLabel: 'Ábra: két 8-as lap eggyé olvad, 16-os lappá, ami 16 pontot ad',
+    diagramPoints: '+{points} pont',
   },
   de: {
     subtitle: 'Schiebe Kacheln, verbinde gleiche Zahlen und erreiche 2048 – und mehr.',
@@ -86,5 +134,29 @@ export const MESSAGES: Messages<Game2048MessageKey> = {
     keyUndo: 'Rückgängig (letzte 2 Züge)',
     keyPauseResume: 'Pause / weiter',
     keyKeepGoing: 'Nach 2048 weiterspielen',
+    touchSwipe: 'Wischen auf dem Spielfeld',
+    touchSlide: 'Alle Kacheln schieben',
+    touchButtons: 'Rückgängig- / Pause-Taste',
+    touchButtonsAction: 'Zug zurücknehmen · pausieren',
+    rulesGoalBody:
+      'Schiebe die Kacheln auf dem 4×4-Feld und verbinde gleiche Zahlen. Erzeuge die {target}-Kachel – danach kannst du weiterspielen, solange noch ein Zug möglich ist.',
+    rulesPlayKeys:
+      'Nutze die Pfeiltasten oder W A S D: Jede Kachel rutscht so weit wie möglich in diese Richtung. U nimmt einen Zug zurück, P pausiert.',
+    rulesPlayTouch:
+      'Wische auf dem Spielfeld: Jede Kachel rutscht so weit wie möglich in Wischrichtung. Die Tasten Rückgängig und Pause findest du unter dem Spielfeld.',
+    rulesRule1: 'Treffen zwei Kacheln mit derselben Zahl aufeinander, verschmelzen sie zu einer Kachel mit der Summe.',
+    rulesRule2: 'Eine Kachel, die gerade verschmolzen ist, kann im selben Zug nicht noch einmal verschmelzen.',
+    rulesRule3: 'Nach jedem Zug, der das Feld verändert, erscheint auf einem leeren Feld eine neue 2 (manchmal eine 4).',
+    rulesRule4: 'Ein Zug, der nichts verändert, zählt nicht und bringt keine neue Kachel.',
+    rulesRule5: 'Das Spiel ist aus, wenn das Feld voll ist und keine zwei benachbarten Kacheln gleich sind. „Rückgängig“ nimmt die letzten 2 Züge zurück.',
+    rulesScoringBody: 'Jede Verschmelzung bringt den Wert der neuen Kachel als Punkte – es gibt keinen Kombo-Bonus. Zum Beispiel:',
+    rulesMerge: '{a} + {a} → {b}: +{b} Punkte',
+    rulesDental:
+      'Im Zahnmodus zeigen die Kacheln Zähne – vom Milchzahn bis zur goldenen Krone bei {target}. Die Zahlen und die Regeln bleiben gleich.',
+    rulesMobileSwipe: 'Wische auf dem Spielfeld, um die Kacheln zu schieben; die Seite scrollt nicht, solange dein Finger darauf liegt.',
+    rulesMobileButtons: 'Rückgängig, Pause, Beenden und Regeln sind Tasten unter dem Spielfeld.',
+    rulesMobileFullscreen: 'Die Vollbild-Taste gibt dem Spiel den ganzen Bildschirm.',
+    diagramLabel: 'Diagramm: zwei Kacheln mit 8 verschmelzen zu einer Kachel mit 16 und bringen 16 Punkte',
+    diagramPoints: '+{points} Punkte',
   },
 };

@@ -1,35 +1,42 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   clearSession,
   formatClock,
+  FinishButton,
   formatNumber,
+  FullscreenButton,
   gameName,
   GameOverlay,
   KeyHelp,
+  RulesButton,
   SaveBadge,
+  TouchHelp,
   StatPanel,
   useArcadeRun,
   useDental,
+  useImmersive,
   useKitMessages,
   useLang,
   useMessages,
   useRestoredSession,
   useRunTimer,
   useSessionAutosave,
+  useSwipe,
   type ArcadeGameProps,
   type ArcadeStatus,
   type OverlayAction,
+  type SwipeDir,
 } from './arcade';
 import { DentalToggle } from './components/DentalToggle';
 import { GameBoard } from './components/GameBoard';
 import { useKeyboardMove } from './hooks/useKeyboardMove';
-import { useSwipeInput } from './hooks/useSwipeInput';
 import { MESSAGES } from './i18n';
 import { ANIMATION_MS } from './logic/constants';
 import { advanceGame, canUndo, createInitialState, reachedTarget, settledTiles } from './logic/game';
 import { is2048State } from './logic/persist';
 import type { Direction, GameAction, GameState, GameStatus } from './logic/types';
 import { maxTile } from './logic/win';
+import { useRulesSections } from './rules';
 import styles from './App.module.css';
 
 /** Bump when GameState changes shape; older saves are then discarded. */
@@ -37,6 +44,7 @@ const SESSION_SCHEMA = 1;
 
 const rng = () => Math.random();
 
+const SWIPE_DIRECTION: Record<SwipeDir, Direction> = { up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT' };
 
 const ARCADE_STATUS: Record<GameStatus, ArcadeStatus> = {
   running: 'running',
@@ -93,7 +101,7 @@ export function Game2048(props: ArcadeGameProps = {}) {
     score: state.score,
     seconds,
     runKey: runId,
-    outcome: () => (reachedTarget(state) ? 'win' : 'over'),
+    outcome: () => (state.finishedEarly ? 'finished' : reachedTarget(state) ? 'win' : 'over'),
     props,
   });
 
@@ -137,6 +145,12 @@ export function Game2048(props: ArcadeGameProps = {}) {
     });
   }, []);
 
+  // Rules and the Finish confirm stop the run like a pause; closing them leaves it paused.
+  const pauseForDialog = useCallback((open: boolean) => {
+    if (open) dispatch({ type: 'pause' });
+  }, [dispatch]);
+  const finish = useCallback(() => dispatch({ type: 'finish' }), [dispatch]);
+
   const continueAfterWin = useCallback(() => dispatch({ type: 'continueAfterWin' }), [dispatch]);
   const undo = useCallback(() => dispatch({ type: 'undo' }), [dispatch]);
 
@@ -161,7 +175,11 @@ export function Game2048(props: ArcadeGameProps = {}) {
     onContinue: continueAfterWin,
     onUndo: undo,
   });
-  const boardRef = useSwipeInput(state.status === 'running', move);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useSwipe(boardRef, (dir) => move(SWIPE_DIRECTION[dir]));
+  const immersive = useImmersive(rootRef);
+  const rulesSections = useRulesSections();
 
   const max = maxTile(state);
   const best = Math.max(stats.best, state.score);
@@ -198,7 +216,7 @@ export function Game2048(props: ArcadeGameProps = {}) {
     };
   } else if (state.status === 'gameOver') {
     overlay = {
-      title: reachedTarget(state) ? t('noMovesWon') : k('gameOver'),
+      title: state.finishedEarly ? k('finishedEarly') : reachedTarget(state) ? t('noMovesWon') : k('gameOver'),
       message: t('gameOverMessage', {
         score: num(state.score),
         best: num(best),
@@ -210,7 +228,7 @@ export function Game2048(props: ArcadeGameProps = {}) {
   }
 
   return (
-    <div className={`arc-game ${styles.game}`} style={{ '--game-color': 'var(--game-2048)' } as CSSProperties}>
+    <div ref={rootRef} className={`arc-game ${styles.game}`} style={{ '--game-color': 'var(--game-2048)' } as CSSProperties}>
       {!embedded && (
         <header className="arc-game__head">
           <div>
@@ -234,7 +252,13 @@ export function Game2048(props: ArcadeGameProps = {}) {
 
       <div className={styles.layout}>
         <div className={`arc-game__board ${styles.boardWrap}`}>
-          <GameBoard ref={boardRef} tiles={state.tiles} label={t('board')} dental={dental} />
+          <GameBoard
+            ref={boardRef}
+            className="arc-board-touch"
+            tiles={state.tiles}
+            label={t('board')}
+            dental={dental}
+          />
           {overlay && <GameOverlay {...overlay} />}
         </div>
 
@@ -256,6 +280,14 @@ export function Game2048(props: ArcadeGameProps = {}) {
               >
                 {state.status === 'paused' ? k('resume') : k('pause')}
               </button>
+              <RulesButton sections={rulesSections} gameId="2048" hotkey={false} onOpenChange={pauseForDialog} />
+              <FinishButton
+                score={state.score}
+                visible={inProgress}
+                onFinish={finish}
+                onOpenChange={pauseForDialog}
+              />
+              <FullscreenButton immersive={immersive} />
             </div>
             <div className={styles.save}>
               <SaveBadge savedAt={inProgress ? savedAt : null} onDiscard={discardSave} />
@@ -274,6 +306,12 @@ export function Game2048(props: ArcadeGameProps = {}) {
 
           <section className="arc-panel">
             <h2 className="arc-panel__title">{t('panelKeys')}</h2>
+            <TouchHelp
+              rows={[
+                [t('touchSwipe'), t('touchSlide')],
+                [t('touchButtons'), t('touchButtonsAction')],
+              ]}
+            />
             <KeyHelp
               rows={[
                 ['← ↑ → ↓', t('keySlide')],

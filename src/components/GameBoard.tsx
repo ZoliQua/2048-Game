@@ -12,19 +12,21 @@ type GameBoardProps = {
   label?: string;
   /** Dental mode tile art. Presentation only. */
   dental?: boolean;
+  /** Extra class names for the board element (e.g. the kit's `arc-board-touch`). */
+  className?: string;
 };
 
 const CELLS = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => i);
 
 export const GameBoard = forwardRef<HTMLDivElement, GameBoardProps>(function GameBoard(
-  { tiles, variant = 'full', label = '2048 board', dental = false },
+  { tiles, variant = 'full', label = '2048 board', dental = false, className = '' },
   ref,
 ) {
   const mini = variant === 'mini';
   return (
     <div
       ref={ref}
-      className={`${styles.board} ${mini ? styles.mini : ''}`}
+      className={`${styles.board} ${mini ? styles.mini : ''} ${className}`.trim()}
       role={mini ? undefined : 'group'}
       aria-label={mini ? undefined : label}
       aria-hidden={mini ? true : undefined}

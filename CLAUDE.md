@@ -33,7 +33,7 @@
 * **Animations**: in scope for v1. CSS-only (`transform` + `transition`). No animation library.
 * **Rendering**: grid-based DOM. Tiles are absolutely positioned with `transform: translate(...)` over a CSS-grid background. No canvas.
 * **Game loop**: there is **no auto-tick**. Every state change is user-driven. There is **no `useGameLoop`** in this project.
-* **Target platform**: desktop browser primary; basic touch support for mobile/tablet via `useSwipeInput`.
+* **Target platform**: desktop browser primary; touch support for phones/tablets via the kit's `useSwipe` (board has `.arc-board-touch`), plus Rules, Finish early and Full screen.
 * **Communication**: respond to the user in **Hungarian** in chat, even though this file and the codebase are in English.
 
 If any fact above disagrees with the real repository, verify first and flag the divergence to the user before editing code.
@@ -68,7 +68,6 @@ src/
     persist.ts       # is2048State — strict saved-session validator
   hooks/
     useKeyboardMove.ts       # arrows + WASD + Space/Enter/P/Esc/C/U/R; single listener; shouldIgnoreKey
-    useSwipeInput.ts         # touchstart/move/end on the board; threshold + dominant-axis; preventDefault to stop page scroll
   components/
     GameBoard.tsx     # 4×4 grid + absolutely positioned Tile children (full + mini variant)
     Tile.tsx          # single tile, keyed by tile.id; transform-based positioning + transition
@@ -149,7 +148,7 @@ Two input sources, one dispatch pipeline.
 
 * **Keyboard** (`useKeyboardMove`): single `keydown` listener attached once per mount, removed on unmount; handlers are read from a ref; every event first goes through the kit's `shouldIgnoreKey` (form fields, Cmd/Ctrl/Alt). Arrows and `WASD` dispatch `{ type: 'move', direction }`. `P`/`Esc` toggle pause, `Space`/`Enter` are the primary action. `C` triggers `continueAfterWin`, `U` undo, `R` restart. Arrow keys must call `event.preventDefault()` so the page never scrolls during play. Keys other than the listed ones are ignored.
 
-* **Touch** (`useSwipeInput`): listeners on the `GameBoard` root, not on `window`. `touchstart` records the origin; `touchmove` calls `event.preventDefault()` once the pointer leaves a small dead zone (so the page does not scroll mid-swipe); `touchend` resolves the swipe. Direction is decided by the dominant axis of `(dx, dy)`; a swipe under a minimum threshold (e.g. 30 px) is dropped as a tap. Successful swipes dispatch the same `{ type: 'move', direction }` action as the keyboard.
+* **Touch** (kit `useSwipe`): Pointer Events on the board ref; dominant axis, 24 px threshold; the board carries `.arc-board-touch` (`touch-action: none`, `overscroll-behavior: contain`) so the page neither scrolls nor pull-to-refreshes. Swipes dispatch the same `{ type: 'move', direction }` action as the keyboard. Rules (`src/rules.tsx`, no R hotkey: R is New game), Finish early (`finish` action → `gameOver` + `finishedEarly`, outcome `finished`) and Full screen (`useImmersive`) sit in the Game panel.
 
 No moves are accepted in `paused`, `won`, or `gameOver` — only the status-changing keys (and undo on the win overlay). Touch input is suppressed in those states for symmetry.
 

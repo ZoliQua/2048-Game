@@ -1,6 +1,9 @@
 export const GRID_SIZE = 4 as const;
 export const TARGET_VALUE = 2048 as const;
 
+/** Merge examples shown in the rules: a pair of N tiles scores 2N (the merged tile's value). */
+export const SCORING_EXAMPLES = [2, 8, 1024] as const;
+
 export const SPAWN_FOUR_PROBABILITY = 0.1 as const;
 
 export const ANIMATION_MS = 120 as const;

@@ -74,6 +74,10 @@ export function advanceGame(state: GameState, action: GameAction, rng: Rng): Gam
     case 'restart': {
       return createInitialState(rng);
     }
+    case 'finish': {
+      if (state.status === 'gameOver' || state.moveCount === 0) return state;
+      return { ...state, status: 'gameOver', finishedEarly: true };
+    }
     case 'pause': {
       if (state.status !== 'running') return state;
       return { ...state, status: 'paused' };
