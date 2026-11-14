@@ -1,7 +1,9 @@
 # 🔢 2048
 
+**English** · [Deutsch](README.de.md) · [Magyar](README.hu.md)
+
 A minimal, type-safe 2048 built with **React 18**, **Vite** and **TypeScript** — keyboard- and touch-friendly, grid-based DOM, no canvas, no game engine, no animation library.
-Runs on its own **and** as one of the fourteen games of **[Zoltan's Arcade](https://github.com/ZoliQua/Arcade-Game-Center)**.
+Runs on its own **and** as one of the fifteen games of **[Zoltan's Arcade](https://github.com/ZoliQua/Arcade-Game-Center)**.
 
 [![CI](https://github.com/ZoliQua/2048-Game/actions/workflows/ci.yml/badge.svg)](https://github.com/ZoliQua/2048-Game/actions/workflows/ci.yml)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -18,6 +20,7 @@ Runs on its own **and** as one of the fourteen games of **[Zoltan's Arcade](http
 - [Features](#-features)
 - [Quick start](#-quick-start)
 - [Controls](#%EF%B8%8F-controls)
+- [On a phone](#-on-a-phone)
 - [Scoring & stats](#-scoring--stats)
 - [Autosave & resume](#-autosave--resume)
 - [Embedding in Arcade-Game-Center](#-embedding-in-arcade-game-center)
@@ -48,6 +51,7 @@ Every game is a standalone repo that also plugs into the portal. They share one 
 | 💣 Minesweeper | [Minesweeper-Game](https://github.com/ZoliQua/Minesweeper-Game) | Logic |
 | ♠️ Solitaire | [Solitaire-Game](https://github.com/ZoliQua/Solitaire-Game) | Cards |
 | 🎴 Ulti | [Ulti-Game](https://github.com/ZoliQua/Ulti-Game) | Cards |
+| 🂡 Snapszer | [Snapszer-Game](https://github.com/ZoliQua/Snapszer-Game) | Cards |
 
 ## ✨ Features
 
@@ -57,7 +61,10 @@ Every game is a standalone repo that also plugs into the portal. They share one 
 - 🎲 **Weighted spawn** — every successful move drops a 2 (90%) or a 4 (10%) on a random empty cell
 - 🏆 **Win at 2048** with a sticky win flag and a **keep going** choice for higher tiles
 - ⏪ **Undo** — roll back the last 2 moves (also saved with the run)
-- 📱 **Swipe input** on the board (30 px threshold, dominant axis)
+- 📱 **Touch play** — swipe on the board (24 px threshold, dominant axis, via the kit's `useSwipe`); the page never scrolls or pull-to-refreshes under your finger
+- 📖 **Rules dialog** with a merge diagram (8 + 8 → 16) in three languages; opening it pauses the run
+- 🏁 **Finish early** — end the run on purpose and put the current score on the leaderboard
+- ⛶ **Full screen** — real full screen where the browser supports it, an immersive page mode on iPhone
 - 💫 **CSS-only animations** — slide, spawn-pop, merge-pulse (respecting *reduced motion*)
 - 💾 **Autosave & resume** — close the tab mid-run and pick up where you left off, undo history included
 - 🏅 **Unified arcade stats** — best score, plays, wins, total time, shared with the portal
@@ -93,9 +100,14 @@ Production build: `npm run build && npm run preview`. The build uses relative as
 | **P** / **Esc** | Pause / resume |
 | **C** | Keep going after reaching 2048 |
 | **R** | New game |
+| Rules / Finish / Full screen buttons | Rules (pauses the run), finish the run early, full screen |
 | **T** | Toggle dark / light theme (standalone page) |
 
-Arrow keys call `preventDefault()` so the page never scrolls during play; touch swipes use a non-passive listener so a swipe never scrolls the page either.
+Arrow keys call `preventDefault()` so the page never scrolls during play; the board is a gesture board (`touch-action: none`), so a swipe never scrolls the page or pulls to refresh either.
+
+### 📱 On a phone
+
+Swipe on the board to slide the tiles; the Undo, Pause, Rules, Finish and Full screen buttons sit below it. On iPhone, Full screen uses an immersive page mode; for no browser bars at all use Share → Add to Home Screen.
 
 ## 🎯 Scoring & stats
 
@@ -113,12 +125,13 @@ A move with several merges adds each one; there is no combo bonus or multiplier.
 
 **Run lifecycle.** A fresh board is immediately *Playing* — there is no start screen; the run clock starts with the first move.
 **P / Esc** pause (overlay, input blocked, clock stopped). Reaching **2048** shows *You win!* with **Keep going** / **New game**
-(the clock is stopped while the choice is open). The run ends when no move is possible. Its outcome is **win** if the
-largest tile is ≥ 2048, otherwise **over**.
+(the clock is stopped while the choice is open). The run ends when no move is possible — or when you choose **Finish**. Its outcome is **win** if the
+largest tile is ≥ 2048, **finished** after an early finish, otherwise **over**.
 
 - 🏆 **Win** — the first 2048 tile shows the win overlay; `hasWon` stays sticky until a new game.
 - ▶️ **Keep going** — returns to play with score, tiles, moves and the win flag intact; later 2048s do not retrigger the overlay.
 - 💀 **Lose** — every cell occupied **and** no orthogonally adjacent equal pair, checked *after* the spawn.
+- 🏁 **Finish early** — with a confirm; the current score goes on the leaderboard, the run is over and its save is cleared.
 - ⏪ **Undo** — each move snapshots the previous state (max 2). Undo works while playing and on the win overlay; it is
   disabled while paused and after the run has ended (the result is already recorded).
 
@@ -141,7 +154,7 @@ import { Game2048, Game2048Demo } from '@arcade/2048';
 
 <Game2048
   embedded                                   // hide the page title; the portal shows it
-  onGameOver={(score) => submitScore('2048', score)}
+  onGameOver={(score, info) => submitScore('2048', score, info?.finished)}
   onStatusChange={({ status, score, seconds }) => updateHeader(status, seconds)}
 />
 <Game2048Demo active={cardIsVisible} />       // landing-page attract mode
@@ -202,8 +215,9 @@ src/
     game.ts            advanceGame reducer + createInitialState, canUndo, reachedTarget
     autopilot.ts       expectimax-lite move choice for the demo
     persist.ts         runtime validation of saved sessions (incl. undo history)
-  hooks/               useKeyboardMove, useSwipeInput
-  components/          GameBoard (full + mini) + Tile, GameBoard.module.css
+  hooks/               useKeyboardMove (swipes use the kit's useSwipe)
+  components/          GameBoard (full + mini) + Tile + MergeDiagram, GameBoard.module.css
+  rules.tsx            useRulesSections — the Rules dialog content
   demo/Game2048Demo.tsx  landing-page attract mode
   Game2048.tsx         the embeddable game (ArcadeGameProps)
   App.tsx              standalone page: <ArcadeShell><Game2048/></ArcadeShell>

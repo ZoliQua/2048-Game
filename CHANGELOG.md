@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-11-14
+
+### Added
+
+- Rules dialog (button „Szabályok” / "Rules" / „Regeln”) with a merge diagram (8 + 8 → 16); opening it pauses the run.
+- Finish early: a confirm, then the current score goes on the leaderboard and the run ends (outcome `finished`).
+- Touch controls: swiping now uses the kit's `useSwipe` (Pointer Events); the board is a gesture board, so the page never scrolls or pull-to-refreshes under the finger; touch help in the Controls panel; layout fits 360 px portrait.
+- Full screen button (native full screen, or an immersive page mode on iPhone); `viewport-fit=cover` for the iOS safe area.
+- README in three languages (English, German, Hungarian); the family table lists all fifteen games.
+
+### Changed
+
+- The custom `useSwipeInput` hook is gone.
+- R stays "New game" in this game (it does not open the Rules).
+
 ## [1.2.1] — 2026-11-14
 
 ### Changed
